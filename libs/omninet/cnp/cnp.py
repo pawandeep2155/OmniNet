@@ -60,6 +60,9 @@ class CNP(nn.Module):
         self.dropout=conf['dropout']
         self.batch_size=-1 #Uninitilized CNP memory
 
+        import pdb
+        pdb.set_trace()
+
         # Prepare the task lists and various output classifiers and embeddings
         if isinstance(tasks, dict):
             self.task_clflen = list(tasks.values())
