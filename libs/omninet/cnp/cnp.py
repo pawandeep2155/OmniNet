@@ -288,7 +288,6 @@ class CNP(nn.Module):
             self.pad_cache=pad_mask
         else:
             pad_mask = pad_mask.to(torch.uint8)
-            print("Type ",self.pad_cache.type(),pad_mask.type())
             self.pad_cache=torch.cat([self.pad_cache,pad_mask],1)
             
     def clear_spatial_cache(self):
