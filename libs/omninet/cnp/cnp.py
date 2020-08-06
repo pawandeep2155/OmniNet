@@ -60,30 +60,121 @@ class CNP(nn.Module):
         self.dropout=conf['dropout']
         self.batch_size=-1 #Uninitilized CNP memory
 
-        import pdb
-        pdb.set_trace()
+        """
+        conf {'input_dim': 512, 'control_dim': 32, 'output_dim': 512, 'spatial_dim': 512, 'temporal_dim': 512, 't
+        emporal_n_layers': 6, 'temporal_n_heads': 8, 'temporal_d_k': 64, 'temporal_d_v': 64, 'temporal_hidde
+        n_dim': 2048, 'decoder_dim': 512, 'decoder_n_layers': 6, 'decoder_n_heads': 8, 'decoder_d_k': 64, 'decoder_d_v': 64,
+        'decoder_hidden_dim': 2048, 'max_seq_len': 500, 'output_embedding_dim': 300, 'dropout': 0.1}
+
+        """
 
         # Prepare the task lists and various output classifiers and embeddings
         if isinstance(tasks, dict):
-            self.task_clflen = list(tasks.values())
-            self.task_dict = {t: i for i, t in enumerate(tasks.keys())}
+            self.task_clflen = list(tasks.values()) #task = {'PENN': 48, 'HMDB': 52, 'IMAGE_CAPTION': 25000, 'VQA': 3500}
+            self.task_dict = {t: i for i, t in enumerate(tasks.keys())} # task_dict = {'PENN': 0, 'HMDB': 1, 'IMAGE_CAPTION': 2, 'VQA': 3}
         else:
             raise ValueError('Tasks must be of type dict containing the tasks and output classifier dimension')
 
-        self.output_clfs = nn.ModuleList([nn.Linear(self.output_dim, t) for t in self.task_clflen])
+        self.output_clfs = nn.ModuleList([nn.Linear(self.output_dim, t) for t in self.task_clflen]) 
+        #["Linear(in_features=512, out_features=48, bias=True), ..., Linear(in_features=512, out_features=3500, bias=True)"]
+        
         #Use one extra to define padding
         self.output_embs = nn.ModuleList([nn.Embedding(t+1,self.output_embedding_dim,padding_idx=t) for t in self.task_clflen])
+        """
+        ModuleList(  (0): Embedding(49, 300, padding_idx=48)
+        (1): Embedding(53, 300, padding_idx=52)
+        (2): Embedding(25001, 300, padding_idx=25000)  (3): Embedding(3501, 300, padding_idx=3500)
+        )
+        """
 
         #Initialize the various sublayers of the CNP
         control_states=domains+list(tasks.keys())
+        # ['ENGLISH', 'GERMAN', 'IMAGE', 'PENN', 'HMDB', 'IMAGE_CAPTION', 'VQA']
         self.control_peripheral=ControlPeripheral(self.control_dim,control_states,gpu_id=gpu_id)
+        # 
+
+
         self.temporal_encoder = TemporalCacheEncoder(self.max_seq_len,self.temporal_n_layers,
                                                      self.temporal_n_heads,self.temporal_d_k,self.temporal_d_v,
                                                     self.temporal_dim,self.temporal_hidden_dim,dropout=self.dropout,
                                                      gpu_id=self.gpu_id)
+
+        """
+    (0): EncoderLayer(
+            (slf_attn): MultiHeadAttention(
+                (w_qs): Linear(in_features=512, out_features=512, bias=True)
+                (w_ks): Linear(in_features=512, out_features=512, bias=True)
+                (w_vs): Linear(in_features=512, out_features=512, bias=True)
+                (attention): ScaledDotProductAttention(
+                (dropout): Dropout(p=0.1, inplace=False)
+                (softmax): Softmax(dim=2)
+                )
+                (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+                (fc): Linear(in_features=512, out_features=512, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (pos_ffn): PositionwiseFeedForward(
+                (w_1): Linear(in_features=512, out_features=2048, bias=True)
+                (w_2): Linear(in_features=2048, out_features=512, bias=True)
+                (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+        )
+
+        """
+
         self.decoder=Decoder(self.max_seq_len,self.decoder_n_layers,self.decoder_n_heads,self.decoder_d_k,
                              self.decoder_d_v,self.decoder_dim,self.decoder_hidden_dim,self.temporal_dim,
                              self.spatial_dim,self.output_dim, dropout=self.dropout,gpu_id=self.gpu_id)
+
+        """
+        (5): DecoderLayer(
+            (slf_attn): MultiHeadAttention(
+                (w_qs): Linear(in_features=512, out_features=512, bias=True)
+                (w_ks): Linear(in_features=512, out_features=512, bias=True)
+                (w_vs): Linear(in_features=512, out_features=512, bias=True)
+                (attention): ScaledDotProductAttention(
+                (dropout): Dropout(p=0.1, inplace=False)
+                (softmax): Softmax(dim=2)
+                )
+                (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+                (fc): Linear(in_features=512, out_features=512, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (temporal_cache_attn): MultiHeadAttention(
+                (w_qs): Linear(in_features=512, out_features=512, bias=True)
+                (w_ks): Linear(in_features=512, out_features=512, bias=True)
+                (w_vs): Linear(in_features=512, out_features=512, bias=True)
+                (attention): ScaledDotProductAttention(
+                (dropout): Dropout(p=0.1, inplace=False)
+                (softmax): Softmax(dim=2)
+                )
+                (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+                (fc): Linear(in_features=512, out_features=512, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (temporal_proj): Linear(in_features=512, out_features=512, bias=True)
+            (spatial_proj): Linear(in_features=512, out_features=512, bias=True)
+            (spatial_cache_attn): MultiHeadAttention(
+                (w_qs): Linear(in_features=512, out_features=512, bias=True)
+                (w_ks): Linear(in_features=512, out_features=512, bias=True)
+                (w_vs): Linear(in_features=512, out_features=512, bias=True)
+                (attention): ScaledDotProductAttention(
+                (dropout): Dropout(p=0.1, inplace=False)
+                (softmax): Softmax(dim=2)
+                )
+                (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+                (fc): Linear(in_features=512, out_features=512, bias=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (spat_dec_proj): Linear(in_features=512, out_features=512, bias=True)
+            (pos_ffn): PositionwiseFeedForward(
+                (w_1): Linear(in_features=512, out_features=2048, bias=True)
+                (w_2): Linear(in_features=2048, out_features=512, bias=True)
+                (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+                (dropout): Dropout(p=0.1, inplace=False)
+            )
+        """
+
 
         #Initialize the various CNP caches as empty
         self.spatial_cache=None
