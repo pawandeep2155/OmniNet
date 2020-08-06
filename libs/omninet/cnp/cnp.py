@@ -287,6 +287,7 @@ class CNP(nn.Module):
         if self.pad_cache is None:
             self.pad_cache=pad_mask
         else:
+            import pdb; pdb.set_trace()
             self.pad_cache=torch.cat([self.pad_cache,pad_mask],1)
             
     def clear_spatial_cache(self):
