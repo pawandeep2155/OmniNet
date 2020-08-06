@@ -29,6 +29,7 @@ from torch.nn.functional import log_softmax, softmax
 class CNP(nn.Module):
 
     def __init__(self,tasks,conf=None,domains=['EMPTY'],gpu_id=-1):
+        import pdb; pdb.set_trace()
         super(CNP, self).__init__()
         default_conf=self.__defaultconf__()
         if(conf!=None):
