@@ -287,7 +287,7 @@ class CNP(nn.Module):
         if self.pad_cache is None:
             self.pad_cache=pad_mask
         else:
-            pad_mask = pad_mask.to(torch.cuda.uint8)
+            pad_mask = pad_mask.to(torch.uint8)
             print("Type ",self.pad_cache.type(),pad_mask.type())
             self.pad_cache=torch.cat([self.pad_cache,pad_mask],1)
             
