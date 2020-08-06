@@ -281,13 +281,13 @@ class CNP(nn.Module):
         else:
             self.temporal_cache=torch.cat([self.temporal_cache,temp_data],1)
 
-        import pdb; pdb.set_trace()
         #Add pad data to pad cache
         if pad_mask is None:
             pad_mask=torch.zeros((b,t),device=self.gpu_id,dtype=torch.uint8)
         if self.pad_cache is None:
             self.pad_cache=pad_mask
         else:
+            print("Type ",self.pad_cache.type(),pad_mask.type())
             self.pad_cache=torch.cat([self.pad_cache,pad_mask],1)
             
     def clear_spatial_cache(self):
