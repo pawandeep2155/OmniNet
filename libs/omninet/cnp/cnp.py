@@ -197,7 +197,6 @@ class CNP(nn.Module):
         
         
     def decode(self,task,targets=None,num_steps=100,recurrent_steps=1,pad_mask=None,beam_width=1):
-        print("CNP decode")
         if targets is not None:
             b,t=targets.shape
             #Use teacher forcing to generate predictions. the graph is kept in memory during this operation.
@@ -250,7 +249,6 @@ class CNP(nn.Module):
         
 
     def encode(self,input,pad_mask=None,domain='EMPTY',recurrent_steps=1):
-        print("CNP encode")
         if (len(input.shape)!=4):
             raise Exception('Invalid input dimensions.')
         b,t,s,f=list(input.size())
@@ -380,6 +378,7 @@ class TemporalCacheEncoder(nn.Module):
 
     def forward(self, src_seq, return_attns=False,recurrent_steps=1, pad_mask=None):
 
+        import pdb; pdb.set_trace()
         enc_slf_attn_list = []
         b,t,_=src_seq.shape
 
