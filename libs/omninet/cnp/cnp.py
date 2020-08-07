@@ -433,6 +433,10 @@ class Decoder(nn.Module):
                 pad_mask=None,return_attns=False,recurrent_steps=1):
 
         # -- Forward
+        print("decoder input", dec_inputs.shape)
+        print("Spatial cache", spatial_cache.shape)
+        print("temporal cache", temporal_cache.shape)
+        print("Temporal spatial link", type(temporal_spatial_link))
         b,t,_=dec_inputs.shape
         if self.gpu_id >= 0:
             dec_pos = torch.arange(1, t + 1,device=self.gpu_id).repeat(b, 1)
