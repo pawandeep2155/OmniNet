@@ -378,7 +378,7 @@ class TemporalCacheEncoder(nn.Module):
 
     def forward(self, src_seq, return_attns=False,recurrent_steps=1, pad_mask=None):
 
-        import pdb; pdb.set_trace()
+        print("src sequence ",src_seq.shape)
         enc_slf_attn_list = []
         b,t,_=src_seq.shape
 
